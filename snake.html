@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<style>
+	#wrap{ position:relative;margin-left:50px;margin-top: 50px; border:2px solid #666;width:400px;height: 400px;  }
+	#wrap:before{ content="";display:block; clear:both;}
+	.rowdiv{ background:green;}
+	.box{width:19px;height:19px ; background:#4a0;float:left; border-top:1px solid #ccc;border-right:1px solid #ccc;}
+	.btn{ width: 100px;height: 50px;  margin-left: 30px;}
+	.score{width: 30px;height: 20px;line-height: 20px;margin-left: 10px;padding: 5px;margin-right: 10px;}
+	.sideBar{clear: both; width:380px;height: 50px; margin: 10px 0 0 50px; }
+</style>
+</head>
+
+<body>
+<div id='wrap'></div>
+<div class="sideBar">
+	分数：<input type="text" name="" value="0" class="score">最高分：<input type="text" name="" value="0" class="score">
+	<button type="button" class="btn">重新开始</button>
+</div>
+<script>
+//分数栏
+var oScore=document.getElementsByClassName('score')[0];
+var oMaxscore=document.getElementsByClassName('score')[1];
+//点击按钮重新开始
+var oBtn=document.getElementsByClassName('btn')[0];
+oBtn.onclick=restart;
+
+//布置背景
+var oWrap=document.getElementById('wrap');
+var html="";
+for(var i=0;i<20;i++){
+	// console.log(1);
+	html+="<div class='rowdiv row"+i+"'>";	
+	for(var j=0;j<20;j++){
+		html+="<div class='box col"+j+"'colIndex='"+j+"'rowIndex='"+i+"'></div>"
+	}
+	html+="</div>";
+}
+oWrap.innerHTML=html;
+
+//封装一个通过getBox(i,j)获取元素的函数。
+function getBox(row,col){
+	var oRow=document.getElementsByClassName('row'+row)[0];
+	oBox=oRow.getElementsByClassName('col'+col)[0];
+	// console.log(oBox.attributes['rowIndex'].nodeValue,oBox.attributes['colIndex'].nodeValue);
+	return oBox;
+}
+
+// 赋初值
+var fRow,		//第一个值在第几行
+	fCol,		//列
+	long,		//长度
+	code,	//储存点击的哪个键
+	arr=[],	//储存用数组
+	m=0,n=0,	//随机的食物
+	timer,speed=150;	//计时器和速度
+	var keyFlag=true;
+	var score=0,maxScore;
+//重新开始
+function restart(){	
+	keyFlag=true;
+	getBox(m,n).style.backgroundColor="";	//清除随机点
+	for (var i = 0; i < arr.length; i++) {		//清除颜色
+		arr[i].style.backgroundColor="";		
+	}
+	clearInterval(timer);	//清除计时器
+	arr=[];long=1;code=0;score=0;	//恢复除值
+	fRow=Math.floor((Math.random()*20));
+	fCol=Math.floor((Math.random()*20));
+	arr.unshift(getBox(fRow,fCol));
+	arr[0].style.backgroundColor="#333";
+	madeRandom();
+}
+restart();
+
+//随机生成一个独立方块
+function madeRandom(){
+	score++;									//增加分数
+	oScore.value=score-1;
+
+	oMaxscore.value=(oMaxscore.value>(score-1))?oMaxscore.value : score-1;
+	m=Math.floor((Math.random()*20));
+	n=Math.floor((Math.random()*20));
+	//如果生成的元素，数组中已经有了，重新生成
+	for (var k = 0; k < arr.length; k++) {
+		if(arr[k].attributes['rowIndex'].nodeValue==m && arr[k].attributes['colIndex'].nodeValue==n){
+			madeRandom();
+		}
+	}
+	getBox(m,n).style.backgroundColor="red";
+}
+
+// 判断是否吃到自己
+function eatSelf(){
+	var flag=false;
+	for (var i = 1; i < arr.length; i++) {
+		if(arr[i]==getBox(fRow,fCol)){
+			flag=true;
+		}
+	}
+	return flag;
+};
+
+//点击改变方向
+
+document.onkeyup=function(event){
+	if (keyFlag){
+		var k=event.keyCode
+		//判断点击的键是否有效
+		if (k<37 || k>40 || Math.abs(code-k)==2) {
+			return;
+		}
+		keyFlag=false;
+		clearInterval(timer);
+		//判断点击的那个键
+		code=k;
+		switch(k){
+			// 左
+			case 37:
+			timer=setInterval(function(){
+				keyFlag=true;
+				//结束判断
+				if(fCol==0 || eatSelf() ){
+					if(confirm("要结束游戏吗")){
+						restart();
+						return;
+					}else{
+						clearInterval(timer);
+						return;
+					}
+				}
+				// 改变位置
+				fCol-=1;changeColor();
+			},speed);
+			break;
+			//上
+			case 38: 
+			timer=setInterval(function(){
+				keyFlag=true;
+				if(fRow==0  || eatSelf()){
+					if(confirm("要结束游戏吗")){
+						restart();
+						return;
+					}else{
+						clearInterval(timer);
+						return;
+					}
+				}
+				fRow-=1;changeColor();
+			},speed);
+			break;	
+			//右	
+			case 39: 
+			timer=setInterval(function(){
+				keyFlag=true;
+				if(fCol==19 || eatSelf()){
+					if(confirm("要结束游戏吗")){
+						restart();
+						return;
+					}else{
+						clearInterval(timer);
+						return;
+					}
+				}
+				fCol+=1;changeColor();
+			},speed);
+			break;
+			//下
+			case 40: 
+			timer=setInterval(function(){
+				keyFlag=true;
+				if(fRow==19 || eatSelf()){
+					if(confirm("要结束游戏吗")){
+						restart();
+						return;
+					}else{
+						clearInterval(timer);
+						return;
+					}
+				}
+				fRow+=1;changeColor();
+			},speed);
+			break;
+
+			default: break;
+		}//switch结束
+	}//if结束
+}//点击结束
+
+//改变数组的颜色
+function changeColor(){
+	arr[arr.length-1].style.backgroundColor="";	//清除最后一个的颜色
+	arr.unshift(getBox(fRow,fCol));				//增加元素
+
+	//判断是否吃到食物
+	if (fRow==m && fCol==n) {
+		madeRandom();
+	}else{
+		arr.pop();	//去除最后一个
+	}					
+	for (var i = 0; i < arr.length; i++) {
+		arr[i].style.backgroundColor="red";
+		arr[0].style.backgroundColor="black";
+	}
+}
+
+
+
+</script>
+
+</body>
+
+
+
+</html>
